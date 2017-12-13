@@ -1,145 +1,91 @@
-include "vec2.bzz"
-include "string.bzz"
+include "include/vec2.bzz"
+include "include/string.bzz"
+include "rrt-include/rrt-implementation.bzz"
+include "drive-include/drive.bzz"
 
-# constants
-XDIM = 500.0
-YDIM = 500.0
-EPSILON = 10.0  # distance from newely sampled node
-NUMNODES = 100  # max iterations
+# RRT* constants
+XDIM = 200.0
+YDIM = 200.0
+EPSILON = XDIM / 5 #10.0  # distance from newely sampled node
+NUMNODES = 500  # max iterations
 NUMNODES_C = 0  # current number of nodes
-RADIUS = 15.0   # radius to look for parent
+RADIUS = EPSILON * 0.75 #15.0   # radius to look for parent
+ROOT_ID = -1
+CURRENT_PATH_WAYPOINT = 0
 
+# ROBOT constants (drive function should be updated)
+R = 0.029112741
+L = 0.127
 
-# RRT* specific functions
+# RUNTIME constants
+CURRENT_WAYPOINT = 0
+PATH_READY = 0
+
+# MISC
+SIM_SCALE = 200.0   # conversion for argos
+
+# Drive functions
 ##########################################################
 
-# distance between two nodes
-function point_distance(start, end){
-    return math.vec2.dis(start, end)
-}
+function follow_waypoints(){
+    if(CURRENT_PATH_WAYPOINT < size(path_points)){
+        var tmp_index = (size(path_points) - 1) - CURRENT_PATH_WAYPOINT
+    	var target = {.x = path_points[tmp_index].x / SIM_SCALE, .y = path_points[tmp_index].y / SIM_SCALE}
+        #log("Going to: ", CURRENT_PATH_WAYPOINT, " / ", size(path_points), ", ", target.x , ", ", target.y)
 
-# create a random node (vector)
-function get_random_point(){
-    var rand_x = rng.uniform(1.0) * XDIM
-    var rand_y = rng.uniform(1.0) * YDIM
-    return math.vec2.new(rand_x, rand_y)
-}
-
-#create a new node
-function new_node(point, cost, parent){
-    return {.point = point, .cost = cost, .parent = parent}
-}
-
-# return the next node within the allowed epsilon
-function step_from_to(start, end){
-    #if(point_distance(start, end) < EPSILON){
-    #    return node2
-    #} else {
-    #    var diff = math.vec2.sub(end, start)
-    #    var node_within_epsilon = math.vec2.newp(EPSILON, math.vec2.angle(diff))
-    #    return math.vec2.add(start, node_within_epsilon)
-    #}
-    if(point_distance(start, end) < EPSILON){
-        return end
-    } else {
-        theta = math.vec2.angle(math.vec2.sub(end, start))
-        return math.vec2.add(start, math.vec2.newp(EPSILON, theta))
-    }
-}
-
-#choose parent
-function choose_parent(nn, newnode, nodes){
-    var result = new_node(newnode.point, newnode.price, newnode.parent)
-    var i = 0
-    var nn_id = 0
-    while(i < size(nodes)){
-        var current_point_distance = point_distance(nodes[i].point, newnode.point)
-        var nn_point_distance = point_distance(nn.point, newnode.point)
-        if(current_point_distance < RADIUS and nodes[i].cost + current_point_distance < nn.cost + nn_point_distance){
-            nn = nodes[i]
-            nn_id = i
-        } #endif
-        i = i + 1
-    } #endwhile
-    result.cost = nn.cost + point_distance(nn.point, newnode.point)
-    result.parent = nn_id
-    return result
-}
-
-# rewire solution
-function rewire(nodes, newnode){
-    var i = 0
-    while(i < size(nodes)){
-        var p = nodes[i]
-        var current_point_distance = point_distance(p.point, newnode.point)
-        if(p != newnode.parent and current_point_distance < RADIUS and newnode.cost + current_point_distance < p.cost){
-            nodes[i] = new_node(newnode.point, newnode.cost, newnode.parent)
-            log("Parent: ", newnode.parent)
-        } #endif
-        i = i + 1
-    } # endwhile
-    return nodes
-}
-
-# write points
-function print_solution(nodes){
-    var nn = new_node(nodes[0].point, nodes[0].cost, nodes[0].parent)
-    var i = 0
-    log("Printing solutions...", size(nodes))
-    while(i < size(nodes)){
-        var current_point_distance = point_distance(nodes[i].point, end_point)
-        var nn_point_distance = point_distance(nn.point, end_point)
-        if(current_point_distance < nn_point_distance){
-            nn = nodes[i]
-            log("Placing: ", i, nodes[i].parent)
+        # calculate taget orientation
+    	var robot_target_vec = math.vec2.new(target.x - pose.position.x, target.y - pose.position.y)
+    	var distance_to_target = math.vec2.dis(math.vec2.new(pose.position.x, pose.position.y), target)
+    	var d_a = math.vec2.angle(robot_target_vec) - pose.orientation.yaw
+        #log("Distance: ", distance_to_target)
+        if(distance_to_target > 0.1){
+    	   avanti(0.2, d_a)
+        } else if (CURRENT_PATH_WAYPOINT < size(path_points)){
+            CURRENT_PATH_WAYPOINT = CURRENT_PATH_WAYPOINT + 1
         }
-        i = i + 1
+    } else {
+        goto(0.0, 0.0)
+        PATH_READY = 0
+        CURRENT_PATH_WAYPOINT = 0
+        CURRENT_WAYPOINT = CURRENT_WAYPOINT + 1
     }
-
 }
+
 
 
 # BUZZ functions
 ##########################################################
 function init() {
-    # globals
-    start_point = math.vec2.new(10.0, 10.0)
-    end_point = math.vec2.new(300.0, 300.0)
-    nodes = {}
-    nodes[NUMNODES_C] = {
-        .point = start_point,
-        .cost = 0.0,
-        .parent = nil
+
+    waypoints = {
+        .0 = {.wp = math.vec2.new(200.0, 0.0)},
+        .1 = {.wp = math.vec2.new(0.0, 200.0)},
+        .2 = {.wp = math.vec2.new(200.0, 200.0)},
+        .3 = {.wp = math.vec2.new(0.0, 0.0)}
     }
-    NUMNODES_C = NUMNODES_C + 1
 }
 
+
 function step() {
-    var i = 0
-    log("Nodes: ", size(nodes), ", ", NUMNODES)
-    while(i < NUMNODES){
-        var rand = new_node(get_random_point(), 0.0, nil)
-        var nn = new_node(nodes[0].point, nodes[0].cost, nodes[0].parent)
-        var j = 0
-        while(j < size(nodes)){
-            var current_point_distance = point_distance(nodes[j].point, rand.point)
-            var nn_point_distance = point_distance(nodes[j].point, nn.point)
-            if(current_point_distance < nn_point_distance){
-                nn = nodes[j]
-            }
-            j = j + 1
-        } #end node while
-        var interpolated_node = step_from_to(nn.point, rand.point)
-        var newnode = new_node(interpolated_node, 0.0, nil)
-        var parent_choice_result = choose_parent(nn, newnode, nodes)
-        nodes[NUMNODES_C] = new_node(parent_choice_result.point, parent_choice_result.cost, parent_choice_result.parent)
-        NUMNODES_C = NUMNODES_C + 1
-        #nodes = rewire(nodes, newnode)
-        i = i + 1
-    }#end main while
-    print_solution(nodes)
-    log("Done...")
+    if(PATH_READY == 0 and CURRENT_WAYPOINT < size(waypoints)){
+        # get endpoints and initialize RRT*
+        log("Waypoint: ", CURRENT_WAYPOINT)
+        var start_point = math.vec2.new(pose.position.x * SIM_SCALE, pose.position.y * SIM_SCALE)
+        var end_point = waypoints[CURRENT_WAYPOINT].wp
+        rrt_init(start_point, end_point)
+        # find the path (result is in "nodes")
+        rrt()
+        PATH_READY = 1
+        path_points = print_solution(nodes, end_point)
+
+    } else if (CURRENT_WAYPOINT < size(waypoints)){
+        follow_waypoints()
+    } else {
+        goto(0.0, 0.0)
+    }
 }
+
+
 
 function destroy() {
 }

@@ -1,0 +1,147 @@
+# RRT* specific functions
+##########################################################
+
+function rrt_init(start_point, end_point){
+    nodes = {}
+    NUMNODES_C = 0
+    nodes[NUMNODES_C] = {
+        .point = start_point,
+        .cost = 0.0,
+        .parent = ROOT_ID,
+        .id = 0
+    }
+    NUMNODES_C = NUMNODES_C + 1
+}
+
+function rrt(){
+    #log("Nodes: ", size(nodes), ", ", NUMNODES, ", ", NUMNODES_C)
+    var i = 0
+
+    var dis_to_goal = 100.0
+    while(i < NUMNODES and dis_to_goal > RADIUS){
+        # get distance from globals
+        var last_node = math.vec2.new(nodes[NUMNODES_C - 1].point.x, nodes[NUMNODES_C - 1].point.y)
+        var current_waypoint = math.vec2.new(waypoints[CURRENT_WAYPOINT].wp.x, waypoints[CURRENT_WAYPOINT].wp.y)
+        dis_to_goal = math.vec2.dis(current_waypoint, last_node)
+        #log("Distance to goal: ", dis_to_goal)
+
+        var rand = new_node(get_random_point(), 0.0, NUMNODES_C)
+        var nn = nodes[0]#new_node(nodes[0].point, nodes[0].cost, nodes[0].parent)
+        var j = 0
+        while(j < size(nodes)){
+            var current_point_distance = point_distance(nodes[j].point, rand.point)
+            var nn_point_distance = point_distance(nn.point, rand.point)
+            if(current_point_distance < nn_point_distance){
+                nn = nodes[j]
+            }
+            j = j + 1
+        } #end node while
+        var interpolated_node = step_from_to(nn.point, rand.point)
+        var newnode = new_node(interpolated_node, 0.0, NUMNODES_C)
+        var parent_choice_result = choose_parent(nn, newnode, nodes)
+        #todo handle NUMNODES_C id
+
+        parent_choice_result.id = NUMNODES_C
+        nodes[NUMNODES_C] = parent_choice_result#new_node(parent_choice_result.point, parent_choice_result.cost, parent_choice_result.parent)
+        NUMNODES_C = NUMNODES_C + 1
+        nodes = rewire(nodes, parent_choice_result)
+        i = i + 1
+    }#end main while
+    log("Done after: ", i, ", steps.")
+}
+
+# distance between two nodes
+function point_distance(start, end){
+    return math.vec2.dis(start, end)
+}
+
+# create a random node (vector)
+function get_random_point(){
+    var rand_x = rng.uniform(1.0) * XDIM
+    var rand_y = rng.uniform(1.0) * YDIM
+    return math.vec2.new(rand_x, rand_y)
+}
+
+#create a new node
+function new_node(point, cost, parent){
+    return {.point = point, .cost = cost, .parent = parent}
+}
+
+# return the next node within the allowed epsilon
+function step_from_to(start, end){
+    if(point_distance(start, end) < EPSILON){
+        return end
+    } else {
+        theta = math.vec2.angle(math.vec2.sub(end, start))
+        return math.vec2.add(start, math.vec2.newp(EPSILON, theta))
+    }
+}
+
+#choose parent
+function choose_parent(nn, newnode, nodes){
+    var i = 0
+    while(i < size(nodes)){
+        var current_point_distance = point_distance(nodes[i].point, newnode.point)
+        var nn_point_distance = point_distance(nn.point, newnode.point)
+        if(current_point_distance < RADIUS and nodes[i].cost + current_point_distance < nn.cost + nn_point_distance){
+            nn = nodes[i]
+        } #endif
+        i = i + 1
+    } #endwhile
+    newnode.cost = nn.cost + point_distance(nn.point, newnode.point)
+    newnode.parent = nn.id
+    #log("Adding: ", newnode.parent)
+    return newnode
+}
+
+# rewire solution
+function rewire(nodes, newnode){
+    var i = 0
+    while(i < size(nodes)){
+        var current_point_distance = point_distance(nodes[i].point, newnode.point)
+        if(nodes[i].id != newnode.parent and current_point_distance < RADIUS and newnode.cost + current_point_distance < nodes[i].cost){
+            nodes[i] = new_node(newnode.point, newnode.cost, newnode.parent)
+            nodes[i].id = newnode.id
+        } #endif
+        i = i + 1
+    } # endwhile
+    return nodes
+}
+
+# write points
+function print_solution(nodes, end_point){
+    var result = {}
+    var argos_result = {}
+
+    var nn = nodes[0]
+    var i = 0
+    while(i < size(nodes)){
+        var current_point_distance = point_distance(nodes[i].point, end_point)
+        var nn_point_distance = point_distance(nn.point, end_point)
+        if(current_point_distance < nn_point_distance){
+            nn = nodes[i]
+            #log("Placing: ", i, ", ", nodes[i].parent)
+        }
+        i = i + 1
+    }
+
+    i = 0
+    while( nn.id != 0){
+        argos_result[i] = {.0 = nn.id, .1 = nn.parent, .2 = nn.point.x, .3 = nn.point.y}
+        result[i] = {.id = nn.id, .parent = nn.parent, .x = nn.point.x, .y = nn.point.y}
+        #log("Res: ", result[i].id, ", ", result[i].parent, ", ", result[i].x, ", ", result[i].y)
+        nn = nodes[nn.parent]
+        i = i + 1
+    }
+    set_argos_path(argos_result)
+    return result
+}
+
+function print_all(nodes){
+    var i = 0
+    log("Printing solutions...", size(nodes))
+    while(i < size(nodes)){
+        log("Node: ", i, ", ", nodes[i].parent, ", ", nodes[i].point.x, ", ", nodes[i].point.y)
+        i = i + 1
+    }
+}
