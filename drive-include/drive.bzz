@@ -1,4 +1,9 @@
+# ROBOT constants (drive function should be updated)
+R = 0.029112741
+L = 0.127
 
+# functions
+##########################################################
 function angle_handler(ang) {
 	while(ang > math.pi)
 		ang = ang - 2.0 * math.pi

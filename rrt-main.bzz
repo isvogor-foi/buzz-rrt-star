@@ -2,6 +2,7 @@ include "include/vec2.bzz"
 include "include/string.bzz"
 include "rrt-include/rrt-implementation.bzz"
 include "drive-include/drive.bzz"
+include "misc-include/misc.bzz"
 
 # RRT* constants
 XDIM = 200.0
@@ -12,10 +13,6 @@ NUMNODES_C = 0  # current number of nodes
 RADIUS = EPSILON * 0.75 #15.0   # radius to look for parent
 ROOT_ID = -1
 CURRENT_PATH_WAYPOINT = 0
-
-# ROBOT constants (drive function should be updated)
-R = 0.029112741
-L = 0.127
 
 # RUNTIME constants
 CURRENT_WAYPOINT = 0
@@ -56,7 +53,6 @@ function follow_waypoints(){
 # BUZZ functions
 ##########################################################
 function init() {
-
     waypoints = {
         .0 = {.wp = math.vec2.new(200.0, 0.0)},
         .1 = {.wp = math.vec2.new(0.0, 200.0)},
