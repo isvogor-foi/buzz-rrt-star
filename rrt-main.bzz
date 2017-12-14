@@ -5,21 +5,19 @@ include "drive-include/drive.bzz"
 include "misc-include/misc.bzz"
 
 # RRT* constants
-XDIM = 300.0
-YDIM = 300.0
-EPSILON = XDIM / 5 #10.0  # distance from newely sampled node
+XDIM = 200.0
+YDIM = 200.0
+EPSILON = XDIM / 12 #10.0  # distance from newely sampled node
 NUMNODES = 500  # max iterations
 NUMNODES_C = 0  # current number of nodes
 RADIUS = EPSILON * 0.75 #15.0   # radius to look for parent
 ROOT_ID = -1
 CURRENT_PATH_WAYPOINT = 0
+VERBOSE_DEBUG = 0
 
 # RUNTIME constants
 CURRENT_WAYPOINT = 0
 PATH_READY = 0
-
-# MISC
-SIM_SCALE = 200.0   # conversion for argos
 
 # Drive functions
 ##########################################################
@@ -27,17 +25,16 @@ SIM_SCALE = 200.0   # conversion for argos
 function follow_waypoints(){
     if(CURRENT_PATH_WAYPOINT < size(path_points)){
         var tmp_index = (size(path_points) - 1) - CURRENT_PATH_WAYPOINT
-    	#var target = {.x = path_points[tmp_index].x / SIM_SCALE, .y = path_points[tmp_index].y / SIM_SCALE}
         var tmp = to_argos(path_points[tmp_index])
         var target = { .x = tmp.x, .y = tmp.y }
-        #log("Going to: ", CURRENT_PATH_WAYPOINT, " / ", size(path_points), ", ", target.x , ", ", target.y)
+        if(VERBOSE_DEBUG == 1) log("Going to: ", CURRENT_PATH_WAYPOINT, " / ", size(path_points), ", ", target.x , ", ", target.y)
 
         # calculate taget orientation
     	var robot_target_vec = math.vec2.new(target.x - pose.position.x, target.y - pose.position.y)
     	var distance_to_target = math.vec2.dis(math.vec2.new(pose.position.x, pose.position.y), target)
     	var d_a = math.vec2.angle(robot_target_vec) - pose.orientation.yaw
 
-        log("Distance: ", distance_to_target)
+        if(VERBOSE_DEBUG == 1) log("Distance: ", distance_to_target)
         if(distance_to_target > 0.1){
     	   avanti(0.2, d_a)
         } else if (CURRENT_PATH_WAYPOINT < size(path_points)){
@@ -72,8 +69,8 @@ function init() {
 function step() {
     if(PATH_READY == 0 and CURRENT_WAYPOINT < size(waypoints)){
         # get endpoints and initialize RRT*
-        log("Waypoint: ", CURRENT_WAYPOINT)
-        #var start_point = math.vec2.new(pose.position.x * SIM_SCALE, pose.position.y * SIM_SCALE)
+        if(VERBOSE_DEBUG == 1) log("Waypoint: ", CURRENT_WAYPOINT)
+
         var start_point = from_argos(math.vec2.new(pose.position.x, pose.position.y))
         var end_point = waypoints[CURRENT_WAYPOINT].wp
 

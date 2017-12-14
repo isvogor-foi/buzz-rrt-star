@@ -23,7 +23,7 @@ function rrt(){
         var last_node = math.vec2.new(nodes[NUMNODES_C - 1].point.x, nodes[NUMNODES_C - 1].point.y)
         var current_waypoint = math.vec2.new(waypoints[CURRENT_WAYPOINT].wp.x, waypoints[CURRENT_WAYPOINT].wp.y)
         dis_to_goal = math.vec2.dis(current_waypoint, last_node)
-        log("Distance to goal: ", dis_to_goal)
+        if(VERBOSE_DEBUG == 1) log("Distance to goal: ", dis_to_goal)
 
         var rand = new_node(get_random_point(), 0.0, NUMNODES_C)
         var nn = nodes[0]#new_node(nodes[0].point, nodes[0].cost, nodes[0].parent)
