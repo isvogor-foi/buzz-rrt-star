@@ -15,6 +15,29 @@ function angle_handler(ang) {
 
 # the old avanti function
 function avanti(v, omega){
+	# check for obstacles
+	get_ir_obst()
+
+	omega = angle_handler(omega)
+	var speed_multiplier = 7.0
+	var v_l = 0
+	var v_r = 0
+	var critical_angle = 45.0 * math.pi / 180.0
+	if(omega > critical_angle){
+		v_l = - v * speed_multiplier
+		v_r = v * speed_multiplier
+	} else if (omega < -critical_angle){
+		v_l = v * speed_multiplier
+		v_r = -v * speed_multiplier
+	}else {
+		v_l = (( 2.0 * v ) - (omega * L )) / (2.0 * R)
+		v_r = (( 2.0 * v ) + (omega * L )) / (2.0 * R)
+	}
+	set_wheels(v_l, v_r)
+}
+
+# the old avanti function
+function veccio_avanti(v, omega){
 	omega = angle_handler(omega)
 	var speed_multiplier = 7.0
 	var v_l = 0

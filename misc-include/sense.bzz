@@ -1,0 +1,30 @@
+IR_SENSOR_RANGE = 0.2
+OBSTACLE_RADIUS = 0.02
+
+function get_ir_obst(){
+    var res = math.vec2.new(0, 0)
+    res = math.vec2.scale(reduce(proximity, function(key, value, acc){
+        var tmp = math.vec2.newp(value.value, value.angle)
+        acc = math.vec2.add(acc, tmp)
+        return acc
+    }, math.vec2.new(0, 0)), 1.0 / size(proximity) )
+
+
+    var angle = math.vec2.angle(res)
+    angle = angle_handler(angle) + pose.orientation.yaw
+    #log("Angle: ", angle, " distance: ", math.vec2.length(res))
+
+    if(math.vec2.length(res) != 0.0){
+        var robot_position = math.vec2.new(pose.position.x, pose.position.y)
+        var obstacle_position = math.vec2.add(robot_position, math.vec2.newp(IR_SENSOR_RANGE, angle))
+        add_obstacle(obstacle_position)
+    }
+
+}
+
+function add_obstacle(position){
+    discovered_obstacles[size(discovered_obstacles)] = {
+        .position = from_argos(math.vec2.new(position.x, position.y)),
+        .radius = meters_to_rrtdim(OBSTACLE_RADIUS) # for now constant
+    }
+}
