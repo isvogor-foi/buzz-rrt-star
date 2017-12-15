@@ -77,6 +77,11 @@ function init() {
         .0 = { .position = from_argos(math.vec2.new(1.1, 1.1)), .radius = meters_to_rrtdim(0.02)},
         .1 = { .position = from_argos(math.vec2.new(1.2, 1.2)), .radius = meters_to_rrtdim(0.02)}
     }
+
+    discovered_obstacles_dis = {
+        .0 = { .position = from_argos(math.vec2.new(1, 1)), .radius = meters_to_rrtdim(0.02)},
+        .1 = { .position = from_argos(math.vec2.new(2, 2)), .radius = meters_to_rrtdim(0.02)}
+    }
 }
 
 

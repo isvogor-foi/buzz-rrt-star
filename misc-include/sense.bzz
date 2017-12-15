@@ -1,6 +1,10 @@
 IR_SENSOR_RANGE = 0.2
 OBSTACLE_RADIUS = 0.02
 
+# argos coordinates for the map
+XDIM_MAP = 30
+YDIM_MAP = 30
+
 function get_ir_obst(){
     var res = math.vec2.new(0, 0)
     res = math.vec2.scale(reduce(proximity, function(key, value, acc){

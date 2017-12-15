@@ -13,7 +13,7 @@ function angle_handler(ang) {
 	return ang
 }
 
-# the old avanti function
+# the avanti function
 function avanti(v, omega){
 	# check for obstacles
 	get_ir_obst()
@@ -37,7 +37,7 @@ function avanti(v, omega){
 }
 
 # the old avanti function
-function veccio_avanti(v, omega){
+function vecchio_avanti(v, omega){
 	omega = angle_handler(omega)
 	var speed_multiplier = 7.0
 	var v_l = 0
