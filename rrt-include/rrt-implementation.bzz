@@ -1,6 +1,9 @@
 # RRT* specific functions
+# All the calculations need to be performed in a XDIM:YDIM dimensions
+# use argos functions transforming coordinates
 ##########################################################
 
+# initialize RRT* parameters
 function rrt_init(start_point, end_point){
     nodes = {}
     NUMNODES_C = 0
@@ -13,8 +16,8 @@ function rrt_init(start_point, end_point){
     NUMNODES_C = NUMNODES_C + 1
 }
 
+# RRT* main algorithm
 function rrt(){
-    #log("Nodes: ", size(nodes), ", ", NUMNODES, ", ", NUMNODES_C)
     var i = 0
 
     var dis_to_goal = 100000.0
@@ -38,17 +41,105 @@ function rrt(){
         } #end node while
         var interpolated_node = step_from_to(nn.point, rand.point)
         var newnode = new_node(interpolated_node, 0.0, NUMNODES_C)
-        var parent_choice_result = choose_parent(nn, newnode, nodes)
-        #todo handle NUMNODES_C id
 
-        parent_choice_result.id = NUMNODES_C
-        nodes[NUMNODES_C] = parent_choice_result#new_node(parent_choice_result.point, parent_choice_result.cost, parent_choice_result.parent)
-        NUMNODES_C = NUMNODES_C + 1
-        nodes = rewire(nodes, parent_choice_result)
+        if(check_intersection(nn.point, rand.point) == 0){
+            var parent_choice_result = choose_parent(nn, newnode, nodes)
+
+            parent_choice_result.id = NUMNODES_C
+            nodes[NUMNODES_C] = parent_choice_result
+            NUMNODES_C = NUMNODES_C + 1
+            nodes = rewire(nodes, parent_choice_result)
+        }
         i = i + 1
     }#end main while
     log("Done after: ", i, ", steps.")
+    log("Waypoint ", CURRENT_WAYPOINT, " / ", size(waypoints) - 1)
+
 }
+
+#choose parent of a new node
+function choose_parent(nn, newnode, nodes){
+    var i = 0
+    while(i < size(nodes)){
+        var current_point_distance = point_distance(nodes[i].point, newnode.point)
+        var nn_point_distance = point_distance(nn.point, newnode.point)
+        if(check_intersection(nodes[i].point, newnode.point) == 0 and current_point_distance < RADIUS and nodes[i].cost + current_point_distance < nn.cost + nn_point_distance){
+            nn = nodes[i]
+        } #endif
+        i = i + 1
+    } #endwhile
+    newnode.cost = nn.cost + point_distance(nn.point, newnode.point)
+    newnode.parent = nn.id
+    #log("Adding: ", newnode.parent)
+    return newnode
+}
+
+# rewire if better path is found
+function rewire(nodes, newnode){
+    var i = 0
+    while(i < size(nodes)){
+        var current_point_distance = point_distance(nodes[i].point, newnode.point)
+        if(check_intersection(nodes[i].point, newnode.point) == 0 and nodes[i].id != newnode.parent and current_point_distance < RADIUS and newnode.cost + current_point_distance < nodes[i].cost){
+            nodes[i] = new_node(newnode.point, newnode.cost, newnode.parent)
+            nodes[i].id = newnode.id
+        } #endif
+        i = i + 1
+    } # endwhile
+    return nodes
+}
+
+# helper functions
+##########################################################
+# kudos to: https://gist.github.com/vonWolfehaus/5023015
+# assumes axis aligment (no rotated objects)
+
+function check_intersection(node_start, node_end){
+    var i = 0
+    while(i < size(obstacles)){
+        # transform coordinates to map type
+        var current = from_argos(math.vec2.new(obstacles[i].x, obstacles[i].y))
+        var w = meters_to_rrtdim(obstacles[i].w)
+        var h = meters_to_rrtdim(obstacles[i].h)
+
+        # get start and endpoint circle intersection (startpoint ,endpoint, middlepoint)
+        var sp = inter(node_start, current.x, current.y, w, h)
+        var ep = inter(node_end, current.x, current.y, w, h)
+
+        # midpoint intersection
+        var x = (node_start.x + node_end.x) / 2.0
+        var y = (node_start.y + node_end.y) / 2.0
+        var mp = inter(math.vec2.new(x, y), current.x, current.y, w, h)
+
+        if( sp == 1 or ep == 1 or mp == 1){
+            return 1
+        }
+
+        i = i + 1
+    }
+    return 0
+}
+
+function inter(circle, x, y, w, h){
+    var r = meters_to_rrtdim(SAFE_RADIUS)
+    var circle_distance_x = math.abs(circle.x - x)
+    var circle_distance_y = math.abs(circle.y - y)
+
+    if (circle_distance_x > (w/2.0 + r)) { return 0 }
+    if (circle_distance_y > (h/2.0 + r)) { return 0 }
+
+    if (circle_distance_x <= (w/2.0)) { return 1 }
+    if (circle_distance_y <= (h/2.0)) { return 1 }
+
+    var dis1 = circle_distance_x - w / 2.0
+    var dis2 = circle_distance_y - h / 2.0
+
+    var cd_sq = math.sqrt(dis1) + math.sqrt(dis2)
+
+    if(cd_sq <= math.sqrt(r)) {return 1}
+    else {return 0}
+}
+
+#################################################################################
 
 # distance between two nodes
 function point_distance(start, end){
@@ -75,37 +166,6 @@ function step_from_to(start, end){
         theta = math.vec2.angle(math.vec2.sub(end, start))
         return math.vec2.add(start, math.vec2.newp(EPSILON, theta))
     }
-}
-
-#choose parent
-function choose_parent(nn, newnode, nodes){
-    var i = 0
-    while(i < size(nodes)){
-        var current_point_distance = point_distance(nodes[i].point, newnode.point)
-        var nn_point_distance = point_distance(nn.point, newnode.point)
-        if(current_point_distance < RADIUS and nodes[i].cost + current_point_distance < nn.cost + nn_point_distance){
-            nn = nodes[i]
-        } #endif
-        i = i + 1
-    } #endwhile
-    newnode.cost = nn.cost + point_distance(nn.point, newnode.point)
-    newnode.parent = nn.id
-    #log("Adding: ", newnode.parent)
-    return newnode
-}
-
-# rewire solution
-function rewire(nodes, newnode){
-    var i = 0
-    while(i < size(nodes)){
-        var current_point_distance = point_distance(nodes[i].point, newnode.point)
-        if(nodes[i].id != newnode.parent and current_point_distance < RADIUS and newnode.cost + current_point_distance < nodes[i].cost){
-            nodes[i] = new_node(newnode.point, newnode.cost, newnode.parent)
-            nodes[i].id = newnode.id
-        } #endif
-        i = i + 1
-    } # endwhile
-    return nodes
 }
 
 # write points

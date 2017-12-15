@@ -5,15 +5,16 @@ include "drive-include/drive.bzz"
 include "misc-include/misc.bzz"
 
 # RRT* constants
-XDIM = 200.0
-YDIM = 200.0
-EPSILON = XDIM / 12 #10.0  # distance from newely sampled node
+XDIM = 400.0
+YDIM = 400.0
+EPSILON = XDIM / 10 #10.0  # distance from newely sampled node
 NUMNODES = 500  # max iterations
 NUMNODES_C = 0  # current number of nodes
 RADIUS = EPSILON * 0.75 #15.0   # radius to look for parent
 ROOT_ID = -1
 CURRENT_PATH_WAYPOINT = 0
 VERBOSE_DEBUG = 0
+SAFE_RADIUS = 0.12 # distance from point to check collisions
 
 # RUNTIME constants
 CURRENT_WAYPOINT = 0
@@ -54,14 +55,22 @@ function follow_waypoints(){
 ##########################################################
 function init() {
     waypoints = {
-        #.0 = {.wp = math.vec2.new(200.0, 0.0)},
-        #.1 = {.wp = math.vec2.new(0.0, 200.0)},
-        #.2 = {.wp = math.vec2.new(200.0, 200.0)},
-        #.3 = {.wp = math.vec2.new(0.0, 0.0)}
         .0 = {.wp = from_argos(math.vec2.new(1.0, 1.0))},
-        .1 = {.wp = from_argos(math.vec2.new(-1.0, 1.0))},
+        .1 = {.wp = from_argos(math.vec2.new(-1.0, -1.0))},
         .2 = {.wp = from_argos(math.vec2.new(1.0, -1.0))},
-        .3 = {.wp = from_argos(math.vec2.new(-1.0, -1.0))}
+        .3 = {.wp = from_argos(math.vec2.new(0.0, 0.0))},
+        .4 = {.wp = from_argos(math.vec2.new(1.0, 0.0))},
+        .5 = {.wp = from_argos(math.vec2.new(0.0, -1.0))},
+        .6 = {.wp = from_argos(math.vec2.new(0.0, 1.0))},
+        .7 = {.wp = from_argos(math.vec2.new(0.0, 0.0))}
+    }
+
+    # for now only box (w = h, not working well otherwise)
+    obstacles = {
+        .0 = {.x = 0.4, .y = 0.4, .w = 0.4, .h = 0.4},
+        .1 = {.x = 0.4, .y = -0.4, .w = 0.4, .h = 0.4},
+        .2 = {.x = -0.4, .y = 0.4, .w = 0.4, .h = 0.4},
+        .3 = {.x = -0.4, .y = -0.4, .w = 0.4, .h = 0.4}
     }
 }
 
@@ -73,9 +82,6 @@ function step() {
 
         var start_point = from_argos(math.vec2.new(pose.position.x, pose.position.y))
         var end_point = waypoints[CURRENT_WAYPOINT].wp
-
-        #to_argos(end_point)
-        #from_argos(math.vec2.new(1.5, 0))
 
         rrt_init(start_point, end_point)
         # find the path (result is in "nodes")
