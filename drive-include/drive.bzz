@@ -23,9 +23,32 @@ function avanti(v, omega){
 
 	# check for obstacles
 	var res = get_ir_obst_avg()
+	# res.distance needs to be sufficiently high because the following code, in rare occasions
+	# can move robot (left-right) inf. Only if one sensor is activated and angle == 0
+	# instead of using avg, use individual sensor readings to avoid this
+	if(obstacle_detected == 1 or (math.abs(res.angle) < 1.0 and res.distance > 0.009)){
+		#log("Maybe stop...", res.distance, ", ", obstacle_detected, ", a: ", math.abs(res.angle))
+		obstacle_detected = 1
+		if(math.abs(res.angle) > 1.4){
+			# i avoided the obstacle... regenerate
+			log("In avanti...")
+			obstacle_detected = 0
+			PATH_RESET_NECESSARY = 1
+			set_wheels(0.0, 0.0)
+			return
+		} else {
+			if(res.angle >= 0.0){
+				set_wheels(v, -v)
+				return
+			} else {
+				set_wheels(-v, v)
+				return
+			}
+		}
+	}
 
 	if(omega > critical_angle){
-		v_l = - v * speed_multiplier
+		v_l = -v * speed_multiplier
 		v_r = v * speed_multiplier
 	} else if (omega < -critical_angle){
 		v_l = v * speed_multiplier

@@ -19,16 +19,15 @@ function rrt_init(start_point, end_point){
 # RRT* main algorithm
 function rrt(){
     var i = 0
-
     var dis_to_goal = 100000.0
     while(i < NUMNODES and dis_to_goal > RADIUS){
         # get distance from globals
         var last_node = math.vec2.new(nodes[NUMNODES_C - 1].point.x, nodes[NUMNODES_C - 1].point.y)
         var current_waypoint = math.vec2.new(waypoints[CURRENT_WAYPOINT].wp.x, waypoints[CURRENT_WAYPOINT].wp.y)
         dis_to_goal = math.vec2.dis(current_waypoint, last_node)
-        if(VERBOSE_DEBUG == 1) log("Distance to goal: ", dis_to_goal)
+        if(VERBOSE_DEBUG == 1) log("Distance to goal: ", dis_to_goal, " log ", RADIUS, " log: ", NUMNODES_C)
 
-        var rand = new_node(get_random_point(), 0.0, NUMNODES_C)
+        var rand = new_node(get_random_point(i), 0.0, NUMNODES_C)
         var nn = nodes[0]#new_node(nodes[0].point, nodes[0].cost, nodes[0].parent)
         var j = 0
         while(j < size(nodes)){
@@ -44,7 +43,6 @@ function rrt(){
 
         if(check_intersection(nn.point, rand.point) == 0){
             var parent_choice_result = choose_parent(nn, newnode, nodes)
-
             parent_choice_result.id = NUMNODES_C
             nodes[NUMNODES_C] = parent_choice_result
             NUMNODES_C = NUMNODES_C + 1
@@ -106,13 +104,14 @@ function check_intersection(node_start, node_end){
         var path_radius = meters_to_rrtdim(SAFE_RADIUS)
         # node_start
         var ns = chk_c2c_intersection(node_start, path_radius, current, current_r)
-        var ne = chk_c2c_intersection(node_start, path_radius, current, current_r)
+        var ne = chk_c2c_intersection(node_end, path_radius, current, current_r)
 
         # anyone has a collision?
-        if(ne == 1 or ns == 1){
+        # don't check within the start point, as the robot
+        # may be in the collision, may be a flag for that?
+        if(ne == 1){
             return 1
         }
-
         i = i + 1
     }
 
@@ -123,7 +122,6 @@ function check_intersection(node_start, node_end){
 function chk_c2c_intersection(circle_a, a_r, circle_b, b_r){
     var distance = point_distance(circle_a, circle_b)
     if(a_r + b_r >= distance){
-        log("Yes!")
         return 1
     } else {
         return 0
@@ -187,7 +185,8 @@ function point_distance(start, end){
 }
 
 # create a random node (vector)
-function get_random_point(){
+function get_random_point(i){
+    rng.setseed(i)
     var rand_x = rng.uniform(1.0) * XDIM
     var rand_y = rng.uniform(1.0) * YDIM
     return math.vec2.new(rand_x, rand_y)

@@ -16,6 +16,7 @@ ROOT_ID = -1
 CURRENT_PATH_WAYPOINT = 0
 VERBOSE_DEBUG = 0
 SAFE_RADIUS = 0.12 # distance from point to check collisions
+PATH_RESET_NECESSARY = 0
 
 # RUNTIME constants
 CURRENT_WAYPOINT = 0
@@ -35,18 +36,20 @@ function follow_waypoints(){
     	var robot_target_vec = math.vec2.new(target.x - pose.position.x, target.y - pose.position.y)
     	var distance_to_target = math.vec2.dis(math.vec2.new(pose.position.x, pose.position.y), target)
     	var d_a = math.vec2.angle(robot_target_vec) - pose.orientation.yaw
-
         if(VERBOSE_DEBUG == 1) log("Distance: ", distance_to_target)
+
         if(distance_to_target > 0.1){
     	   avanti(0.2, d_a)
         } else if (CURRENT_PATH_WAYPOINT < size(path_points)){
             CURRENT_PATH_WAYPOINT = CURRENT_PATH_WAYPOINT + 1
         }
-    } else {
+    } else if (size(path_points) != 0){
         goto(0.0, 0.0)
         PATH_READY = 0
         CURRENT_PATH_WAYPOINT = 0
         CURRENT_WAYPOINT = CURRENT_WAYPOINT + 1
+    } else {
+        log("Something went wrong...")
     }
 }
 
@@ -80,6 +83,7 @@ function init() {
 
     # discrete obstacles (stored in MAP coordinates)
     discovered_obstacles_dis = {}
+    obstacle_detected = 0
 }
 
 
@@ -91,7 +95,7 @@ function init() {
 # break-apart rrt* to be step-based (for multiple robots -- for argos sim mostly)
 
 function step() {
-    if(PATH_READY == 0 and CURRENT_WAYPOINT < size(waypoints)){
+    if(PATH_READY == 0 and CURRENT_WAYPOINT < size(waypoints) or PATH_RESET_NECESSARY == 1){
         # get endpoints and initialize RRT*
         if(VERBOSE_DEBUG == 1) log("Waypoint: ", CURRENT_WAYPOINT)
 
@@ -99,7 +103,6 @@ function step() {
         var end_point = waypoints[CURRENT_WAYPOINT].wp
 
         rrt_init(start_point, end_point)
-        # find the path (result is in "nodes")
         rrt()
         PATH_READY = 1
         path_points = print_solution(nodes, end_point)
@@ -107,7 +110,6 @@ function step() {
     } else if (CURRENT_WAYPOINT < size(waypoints)){
         #argos_draw_obstacles(discovered_obstacles)
         argos_draw_obstacles_dis(discovered_obstacles_dis)
-
         follow_waypoints()
     } else {
         goto(0.0, 0.0)
