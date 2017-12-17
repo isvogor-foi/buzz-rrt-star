@@ -94,6 +94,13 @@ function rewire(nodes, newnode){
 # assumes axis aligment (no rotated objects)
 
 function check_intersection(node_start, node_end){
+    return chk_rect_obstacles(node_start, node_end)
+    #return 0
+}
+
+# this is for rectangular, big obstacles you can put in argos
+# this uses the obstacle data structure
+function chk_rect_obstacles(node_start, node_end){
     var i = 0
     while(i < size(obstacles)){
         # transform coordinates to map type
@@ -102,13 +109,13 @@ function check_intersection(node_start, node_end){
         var h = meters_to_rrtdim(obstacles[i].h)
 
         # get start and endpoint circle intersection (startpoint ,endpoint, middlepoint)
-        var sp = inter(node_start, current.x, current.y, w, h)
-        var ep = inter(node_end, current.x, current.y, w, h)
+        var sp = chk_cir_rec_intersection(node_start, current.x, current.y, w, h)
+        var ep = chk_cir_rec_intersection(node_end, current.x, current.y, w, h)
 
         # midpoint intersection
         var x = (node_start.x + node_end.x) / 2.0
         var y = (node_start.y + node_end.y) / 2.0
-        var mp = inter(math.vec2.new(x, y), current.x, current.y, w, h)
+        var mp = chk_cir_rec_intersection(math.vec2.new(x, y), current.x, current.y, w, h)
 
         if( sp == 1 or ep == 1 or mp == 1){
             return 1
@@ -119,7 +126,8 @@ function check_intersection(node_start, node_end){
     return 0
 }
 
-function inter(circle, x, y, w, h){
+# check the intersection between rectangular and circular obstacle
+function chk_cir_rec_intersection(circle, x, y, w, h){
     var r = meters_to_rrtdim(SAFE_RADIUS)
     var circle_distance_x = math.abs(circle.x - x)
     var circle_distance_y = math.abs(circle.y - y)

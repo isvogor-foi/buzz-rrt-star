@@ -15,14 +15,15 @@ function angle_handler(ang) {
 
 # the avanti function
 function avanti(v, omega){
-	# check for obstacles
-	get_ir_obst()
-
-	omega = angle_handler(omega)
 	var speed_multiplier = 7.0
 	var v_l = 0
 	var v_r = 0
-	var critical_angle = 45.0 * math.pi / 180.0
+	var critical_angle = 35.0 * math.pi / 180.0
+	omega = angle_handler(omega)
+
+	# check for obstacles
+	var res = get_ir_obst_avg()
+
 	if(omega > critical_angle){
 		v_l = - v * speed_multiplier
 		v_r = v * speed_multiplier

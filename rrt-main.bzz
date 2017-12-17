@@ -78,16 +78,15 @@ function init() {
         .1 = { .position = from_argos(math.vec2.new(1.2, 1.2)), .radius = meters_to_rrtdim(0.02)}
     }
 
-    discovered_obstacles_dis = {
-        .0 = { .position = from_argos(math.vec2.new(1, 1)), .radius = meters_to_rrtdim(0.02)},
-        .1 = { .position = from_argos(math.vec2.new(2, 2)), .radius = meters_to_rrtdim(0.02)}
-    }
+    # discrete obstacles (stored in MAP coordinates)
+    discovered_obstacles_dis = {}
 }
 
 
 # TODO:
-# add obstacles dynamically
+# add obstacles dynamically - DONE
 # add map discretization (to prevent to much obstacles on the same place)
+# add circle-circle detection
 # add probability to obstacles
 # break-apart rrt* to be step-based (for multiple robots -- for argos sim mostly)
 
@@ -106,7 +105,8 @@ function step() {
         path_points = print_solution(nodes, end_point)
 
     } else if (CURRENT_WAYPOINT < size(waypoints)){
-        argos_draw_obstacles(discovered_obstacles)
+        #argos_draw_obstacles(discovered_obstacles)
+        argos_draw_obstacles_dis(discovered_obstacles_dis)
 
         follow_waypoints()
     } else {
