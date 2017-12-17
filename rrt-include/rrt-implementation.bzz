@@ -94,8 +94,40 @@ function rewire(nodes, newnode){
 # assumes axis aligment (no rotated objects)
 
 function check_intersection(node_start, node_end){
-    return chk_rect_obstacles(node_start, node_end)
-    #return 0
+
+    var i = 0
+    while(i < size(discovered_obstacles_dis)){
+        # obstacle circle
+        var current = from_argos(math.vec2.new(discovered_obstacles_dis[i].position.x, discovered_obstacles_dis[i].position.y))
+        var current_r = (A_HEIGHT / DIM_MAP) / 2.0
+        current_r = meters_to_rrtdim(current_r)
+
+        # get radius for the path offset
+        var path_radius = meters_to_rrtdim(SAFE_RADIUS)
+        # node_start
+        var ns = chk_c2c_intersection(node_start, path_radius, current, current_r)
+        var ne = chk_c2c_intersection(node_start, path_radius, current, current_r)
+
+        # anyone has a collision?
+        if(ne == 1 or ns == 1){
+            return 1
+        }
+
+        i = i + 1
+    }
+
+    #return chk_rect_obstacles(node_start, node_end)
+    return 0
+}
+
+function chk_c2c_intersection(circle_a, a_r, circle_b, b_r){
+    var distance = point_distance(circle_a, circle_b)
+    if(a_r + b_r >= distance){
+        log("Yes!")
+        return 1
+    } else {
+        return 0
+    }
 }
 
 # this is for rectangular, big obstacles you can put in argos
@@ -109,13 +141,13 @@ function chk_rect_obstacles(node_start, node_end){
         var h = meters_to_rrtdim(obstacles[i].h)
 
         # get start and endpoint circle intersection (startpoint ,endpoint, middlepoint)
-        var sp = chk_cir_rec_intersection(node_start, current.x, current.y, w, h)
-        var ep = chk_cir_rec_intersection(node_end, current.x, current.y, w, h)
+        var sp = chk_cir2rec_intersection(node_start, current.x, current.y, w, h)
+        var ep = chk_cir2rec_intersection(node_end, current.x, current.y, w, h)
 
         # midpoint intersection
         var x = (node_start.x + node_end.x) / 2.0
         var y = (node_start.y + node_end.y) / 2.0
-        var mp = chk_cir_rec_intersection(math.vec2.new(x, y), current.x, current.y, w, h)
+        var mp = chk_cir2rec_intersection(math.vec2.new(x, y), current.x, current.y, w, h)
 
         if( sp == 1 or ep == 1 or mp == 1){
             return 1
@@ -127,7 +159,7 @@ function chk_rect_obstacles(node_start, node_end){
 }
 
 # check the intersection between rectangular and circular obstacle
-function chk_cir_rec_intersection(circle, x, y, w, h){
+function chk_cir2rec_intersection(circle, x, y, w, h){
     var r = meters_to_rrtdim(SAFE_RADIUS)
     var circle_distance_x = math.abs(circle.x - x)
     var circle_distance_y = math.abs(circle.y - y)
