@@ -37,7 +37,7 @@ function avanti(v, omega){
 			#return
 		}
 		log("I should reset...", math.abs(omega - res.angle), ", ", math.abs(res.angle))
-		if (math.abs(res.angle) >= 0.6){
+		if (math.abs(res.angle) >= 0.5){
 			if(math.abs(omega - res.angle) < 0.3){
 				path_points = {}
 				PATH_READY = 0
@@ -47,48 +47,6 @@ function avanti(v, omega){
 		}
 		return
 	}
-	# if(math.abs(res.angle) < 0.8 and res.distance > 0.009 or COLLISION_DETECTED == 1 and math.abs(omega - res.angle) < 0.3){
-	# 	COLLISION_DETECTED = 1
-	# 	v = v * speed_multiplier
-	# 	if(res.angle >= 0.0){
-	# 		set_wheels(v, -v)
-	# 		#return
-	# 	} else {
-	# 		set_wheels(-v, v)
-	# 		#return
-	# 	}
-	# 	if (math.abs(res.angle) >= 0.8){
-	# 		log("I should reset...", math.abs(omega - res.angle))
-	# 		if(math.abs(omega - res.angle) < 0.3){
-	# 			path_points = {}
-	# 			PATH_READY = 0
-	# 			CURRENT_PATH_WAYPOINT = 0
-	# 		}
-	# 		COLLISION_DETECTED = 0
-	# 	}
-	# 	return
-	# }
-
-	# if(obstacle_detected == 1 or (math.abs(res.angle) < 0.8 and res.distance > 0.009 and math.abs(res.angle) < 1.4)){
-	# 	obstacle_detected = 1
-	# 	if(math.abs(res.angle) > 1.4){
-	# 		log("In avanti...")
-	# 		PATH_READY = 0
-	# 		CURRENT_PATH_WAYPOINT = 0
-	# 		obstacle_detected = 0
-	# 		set_wheels(0.0, 0.0)
-	# 		return
-	# 	} else {
-	# 		v = v * speed_multiplier
-	# 		if(res.angle >= 0.0){
-	# 			set_wheels(v, -v)
-	# 			return
-	# 		} else {
-	# 			set_wheels(-v, v)
-	# 			return
-	# 		}
-	# 	}
-	# }
 
 	if(omega > critical_angle){
 		v = v * speed_multiplier

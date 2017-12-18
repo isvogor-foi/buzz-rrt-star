@@ -71,10 +71,10 @@ function init() {
 
     # for now only box (w = h, not working well otherwise)
     obstacles = {
-        .0 = {.x = 0.4, .y = 0.4, .w = 0.4, .h = 0.4},
-        .1 = {.x = 0.4, .y = -0.4, .w = 0.4, .h = 0.4},
-        .2 = {.x = -0.4, .y = 0.4, .w = 0.4, .h = 0.4},
-        .3 = {.x = -0.4, .y = -0.4, .w = 0.4, .h = 0.4}
+        #.0 = {.x = 0.4, .y = 0.4, .w = 0.4, .h = 0.4},
+        #.1 = {.x = 0.4, .y = -0.4, .w = 0.4, .h = 0.4},
+        #.2 = {.x = -0.4, .y = 0.4, .w = 0.4, .h = 0.4},
+        #.3 = {.x = -0.4, .y = -0.4, .w = 0.4, .h = 0.4}
     }
 
     # .0 = point, .1 = radius
@@ -110,17 +110,17 @@ function init() {
         # .22 = {.position = math.vec2.new(0.2, -0.5), .radius = meters_to_rrtdim(0.05)},
         # .23 = {.position = math.vec2.new(0.2, -0.6), .radius = meters_to_rrtdim(0.05)}
     }
-    obstacle_detected = 0
+    #obstacle_detected = 0
 }
 
 
 # TODO:
-# add obstacles dynamically - DONE
-# add map discretization (to prevent to much obstacles on the same place)
-# add circle-circle detection
 # add probability to obstacles
 # break-apart rrt* to be step-based (for multiple robots -- for argos sim mostly)
 # if obstacles are clustered, replace multiple with one larger
+# Known issues:
+# control (avanti), robot can get stuck, needs smarter handling of "remap"
+# sometimes waypoint numbers are mixed or reseted unintentionally
 
 function step() {
     if(PATH_READY == 0 and CURRENT_WAYPOINT < size(waypoints)){
@@ -131,11 +131,13 @@ function step() {
         var end_point = waypoints[CURRENT_WAYPOINT].wp
 
         rrt_init(start_point, end_point)
-        rrt()
+        var res = rrt()
+
+
         PATH_READY = 1
         path_points = print_solution(nodes, end_point)
 
-    } else if (CURRENT_WAYPOINT < size(waypoints)){
+    } else if (CURRENT_WAYPOINT < size(waypoints) and size(path_points) != 0){
         #argos_draw_obstacles(discovered_obstacles)
         argos_draw_obstacles_dis(discovered_obstacles_dis)
         follow_waypoints()

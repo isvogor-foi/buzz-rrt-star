@@ -52,6 +52,7 @@ function rrt(){
     }#end main while
     log("Done after: ", i, ", steps.")
     log("Waypoint ", CURRENT_WAYPOINT, " / ", size(waypoints) - 1)
+    return 1 
 }
 
 #choose parent of a new node

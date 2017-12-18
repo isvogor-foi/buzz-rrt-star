@@ -85,3 +85,5 @@ function add_obstacle_dis(position){
         .radius = meters_to_rrtdim(obstacle_radius)
     }
 }
+
+# larger obstacles
