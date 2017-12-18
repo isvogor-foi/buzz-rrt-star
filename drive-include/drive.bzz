@@ -26,33 +26,78 @@ function avanti(v, omega){
 	# res.distance needs to be sufficiently high because the following code, in rare occasions
 	# can move robot (left-right) inf. Only if one sensor is activated and angle == 0
 	# instead of using avg, use individual sensor readings to avoid this
-	if(obstacle_detected == 1 or (math.abs(res.angle) < 1.0 and res.distance > 0.009)){
-		#log("Maybe stop...", res.distance, ", ", obstacle_detected, ", a: ", math.abs(res.angle))
-		obstacle_detected = 1
-		if(math.abs(res.angle) > 1.4){
-			# i avoided the obstacle... regenerate
-			log("In avanti...")
-			obstacle_detected = 0
-			PATH_RESET_NECESSARY = 1
-			set_wheels(0.0, 0.0)
-			return
+	if(math.abs(res.angle) < 0.8 and res.distance > 0.009 or COLLISION_DETECTED == 1 and math.abs(omega - res.angle) < 0.3){
+		COLLISION_DETECTED = 1
+		v = v * speed_multiplier
+		if(res.angle >= 0.0){
+			set_wheels(v, -v)
+			#return
 		} else {
-			if(res.angle >= 0.0){
-				set_wheels(v, -v)
-				return
-			} else {
-				set_wheels(-v, v)
-				return
-			}
+			set_wheels(-v, v)
+			#return
 		}
+		log("I should reset...", math.abs(omega - res.angle), ", ", math.abs(res.angle))
+		if (math.abs(res.angle) >= 0.6){
+			if(math.abs(omega - res.angle) < 0.3){
+				path_points = {}
+				PATH_READY = 0
+				CURRENT_PATH_WAYPOINT = 0
+			}
+			COLLISION_DETECTED = 0
+		}
+		return
 	}
+	# if(math.abs(res.angle) < 0.8 and res.distance > 0.009 or COLLISION_DETECTED == 1 and math.abs(omega - res.angle) < 0.3){
+	# 	COLLISION_DETECTED = 1
+	# 	v = v * speed_multiplier
+	# 	if(res.angle >= 0.0){
+	# 		set_wheels(v, -v)
+	# 		#return
+	# 	} else {
+	# 		set_wheels(-v, v)
+	# 		#return
+	# 	}
+	# 	if (math.abs(res.angle) >= 0.8){
+	# 		log("I should reset...", math.abs(omega - res.angle))
+	# 		if(math.abs(omega - res.angle) < 0.3){
+	# 			path_points = {}
+	# 			PATH_READY = 0
+	# 			CURRENT_PATH_WAYPOINT = 0
+	# 		}
+	# 		COLLISION_DETECTED = 0
+	# 	}
+	# 	return
+	# }
+
+	# if(obstacle_detected == 1 or (math.abs(res.angle) < 0.8 and res.distance > 0.009 and math.abs(res.angle) < 1.4)){
+	# 	obstacle_detected = 1
+	# 	if(math.abs(res.angle) > 1.4){
+	# 		log("In avanti...")
+	# 		PATH_READY = 0
+	# 		CURRENT_PATH_WAYPOINT = 0
+	# 		obstacle_detected = 0
+	# 		set_wheels(0.0, 0.0)
+	# 		return
+	# 	} else {
+	# 		v = v * speed_multiplier
+	# 		if(res.angle >= 0.0){
+	# 			set_wheels(v, -v)
+	# 			return
+	# 		} else {
+	# 			set_wheels(-v, v)
+	# 			return
+	# 		}
+	# 	}
+	# }
 
 	if(omega > critical_angle){
-		v_l = -v * speed_multiplier
-		v_r = v * speed_multiplier
+		v = v * speed_multiplier
+		v_l = -v
+		v_r = v
 	} else if (omega < -critical_angle){
-		v_l = v * speed_multiplier
-		v_r = -v * speed_multiplier
+		v = v * speed_multiplier
+		v_l = v
+		v_r = -v
 	}else {
 		v_l = (( 2.0 * v ) - (omega * L )) / (2.0 * R)
 		v_r = (( 2.0 * v ) + (omega * L )) / (2.0 * R)

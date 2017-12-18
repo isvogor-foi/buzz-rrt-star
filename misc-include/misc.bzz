@@ -48,6 +48,7 @@ function argos_draw_obstacles_dis(obstacles){
     while(i < size(obstacles)){
         #var temp = to_argos(obstacles[i].position)
         var temp = obstacles[i].position
+        #log("Obs: ", temp.x, ", ", temp.y, ", ", rrtdim_to_meters(obstacles[i].radius))
         obs[i] = {
             .0 = temp.x,
             .1 = temp.y,

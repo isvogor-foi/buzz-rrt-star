@@ -52,7 +52,6 @@ function rrt(){
     }#end main while
     log("Done after: ", i, ", steps.")
     log("Waypoint ", CURRENT_WAYPOINT, " / ", size(waypoints) - 1)
-
 }
 
 #choose parent of a new node
@@ -102,14 +101,22 @@ function check_intersection(node_start, node_end){
 
         # get radius for the path offset
         var path_radius = meters_to_rrtdim(SAFE_RADIUS)
-        # node_start
         var ns = chk_c2c_intersection(node_start, path_radius, current, current_r)
         var ne = chk_c2c_intersection(node_end, path_radius, current, current_r)
+        var x = (node_start.x + node_end.x) / 2.0
+        var y = (node_start.y + node_end.y) / 2.0
+        var mp = chk_c2c_intersection(math.vec2.new(x, y), path_radius, current, current_r)
+
+        var my = from_argos(math.vec2.new(pose.position.x, pose.position.y))
+        if(equal(my, node_start)){
+            ns = 0
+        }
 
         # anyone has a collision?
         # don't check within the start point, as the robot
         # may be in the collision, may be a flag for that?
-        if(ne == 1){
+        if(ne == 1 or ns == 1 or mp == 1){
+            #log("I: ", i)
             return 1
         }
         i = i + 1
@@ -121,7 +128,10 @@ function check_intersection(node_start, node_end){
 
 function chk_c2c_intersection(circle_a, a_r, circle_b, b_r){
     var distance = point_distance(circle_a, circle_b)
+    #log("Verify: ", circle_a.x, ", ", circle_a.y, ", r: ", a_r, " :: ", circle_b.x, ", ", circle_b.y, ", r: ", b_r)
     if(a_r + b_r >= distance){
+        #log("My: ", my.x, ", ", my.y)
+        #log("Collision: ", circle_a.x, ", ", circle_a.y, ", r: ", a_r, " :: ", circle_b.x, ", ", circle_b.y, ", r: ", b_r)
         return 1
     } else {
         return 0
@@ -179,6 +189,15 @@ function chk_cir2rec_intersection(circle, x, y, w, h){
 
 #################################################################################
 
+# check equal
+function equal(vector_a, vector_b){
+    if(vector_a.x == vector_b.x and vector_a.y == vector_b.y){
+        return 1
+    } else {
+        return 0
+    }
+}
+
 # distance between two nodes
 function point_distance(start, end){
     return math.vec2.dis(start, end)
@@ -229,7 +248,6 @@ function print_solution(nodes, end_point){
         var tmp_argos_point = to_argos(math.vec2.new(nn.point.x, nn.point.y))
         argos_result[i] = {.0 = nn.id, .1 = nn.parent, .2 = tmp_argos_point.x, .3 = tmp_argos_point.y}
         result[i] = {.id = nn.id, .parent = nn.parent, .x = nn.point.x, .y = nn.point.y}
-        #log("Res: ", result[i].id, ", ", result[i].parent, ", ", result[i].x, ", ", result[i].y)
         nn = nodes[nn.parent]
         i = i + 1
     }

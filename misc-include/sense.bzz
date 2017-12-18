@@ -48,7 +48,7 @@ function get_ir_obst_avg(){
         #add_obstacle(obstacle_position)
         add_obstacle_dis(obstacle_position)
     }
-    
+
     return result
 }
 
@@ -78,7 +78,6 @@ function add_obstacle_dis(position){
         }
         i = i + 1
     }
-
     # add
     var obstacle_radius = (A_HEIGHT / DIM_MAP) / 2.0
     discovered_obstacles_dis[size(discovered_obstacles_dis)] = {

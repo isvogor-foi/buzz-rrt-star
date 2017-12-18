@@ -9,14 +9,13 @@ include "misc-include/sense.bzz"
 XDIM = 400.0
 YDIM = 400.0
 EPSILON = XDIM / 10 #10.0  # distance from newely sampled node
-NUMNODES = 500  # max iterations
+NUMNODES = 100  # max iterations
 NUMNODES_C = 0  # current number of nodes
 RADIUS = EPSILON * 0.75 #15.0   # radius to look for parent
 ROOT_ID = -1
 CURRENT_PATH_WAYPOINT = 0
 VERBOSE_DEBUG = 0
 SAFE_RADIUS = 0.12 # distance from point to check collisions
-PATH_RESET_NECESSARY = 0
 
 # RUNTIME constants
 CURRENT_WAYPOINT = 0
@@ -49,6 +48,9 @@ function follow_waypoints(){
         CURRENT_PATH_WAYPOINT = 0
         CURRENT_WAYPOINT = CURRENT_WAYPOINT + 1
     } else {
+        goto(0.0, 0.0)
+        PATH_READY = 0
+        CURRENT_PATH_WAYPOINT = 0
         log("Something went wrong...")
     }
 }
@@ -82,7 +84,32 @@ function init() {
     }
 
     # discrete obstacles (stored in MAP coordinates)
-    discovered_obstacles_dis = {}
+    discovered_obstacles_dis = {
+        # .0 = {.position = math.vec2.new(0.2, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .1 = {.position = math.vec2.new(0.2, 0.3), .radius = meters_to_rrtdim(0.05)},
+        # .2 = {.position = math.vec2.new(0.2, 0.4), .radius = meters_to_rrtdim(0.05)},
+        # .3 = {.position = math.vec2.new(0.2, 0.5), .radius = meters_to_rrtdim(0.05)},
+        # .4 = {.position = math.vec2.new(0.2, 0.6), .radius = meters_to_rrtdim(0.05)},
+        # .5 = {.position = math.vec2.new(0.3, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .6 = {.position = math.vec2.new(0.4, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .7 = {.position = math.vec2.new(0.5, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .8 = {.position = math.vec2.new(0.6, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .9 = {.position = math.vec2.new(0.2, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .10 = {.position = math.vec2.new(-0.2, 0.3), .radius = meters_to_rrtdim(0.05)},
+        # .11 = {.position = math.vec2.new(-0.2, 0.4), .radius = meters_to_rrtdim(0.05)},
+        # .12 = {.position = math.vec2.new(-0.2, 0.5), .radius = meters_to_rrtdim(0.05)},
+        # .13 = {.position = math.vec2.new(-0.2, 0.6), .radius = meters_to_rrtdim(0.05)},
+        # .14 = {.position = math.vec2.new(-0.3, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .15 = {.position = math.vec2.new(-0.4, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .16 = {.position = math.vec2.new(-0.5, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .17 = {.position = math.vec2.new(-0.6, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .18 = {.position = math.vec2.new(-0.2, 0.2), .radius = meters_to_rrtdim(0.05)},
+        # .19 = {.position = math.vec2.new(0.2, -0.2), .radius = meters_to_rrtdim(0.05)},
+        # .20 = {.position = math.vec2.new(0.2, -0.3), .radius = meters_to_rrtdim(0.05)},
+        # .21 = {.position = math.vec2.new(0.2, -0.4), .radius = meters_to_rrtdim(0.05)},
+        # .22 = {.position = math.vec2.new(0.2, -0.5), .radius = meters_to_rrtdim(0.05)},
+        # .23 = {.position = math.vec2.new(0.2, -0.6), .radius = meters_to_rrtdim(0.05)}
+    }
     obstacle_detected = 0
 }
 
@@ -93,9 +120,10 @@ function init() {
 # add circle-circle detection
 # add probability to obstacles
 # break-apart rrt* to be step-based (for multiple robots -- for argos sim mostly)
+# if obstacles are clustered, replace multiple with one larger
 
 function step() {
-    if(PATH_READY == 0 and CURRENT_WAYPOINT < size(waypoints) or PATH_RESET_NECESSARY == 1){
+    if(PATH_READY == 0 and CURRENT_WAYPOINT < size(waypoints)){
         # get endpoints and initialize RRT*
         if(VERBOSE_DEBUG == 1) log("Waypoint: ", CURRENT_WAYPOINT)
 
