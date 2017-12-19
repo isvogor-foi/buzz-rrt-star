@@ -27,21 +27,6 @@ function from_argos(point){
     return math.vec2.new(x, y)
 }
 
-function argos_draw_obstacles(obstacles){
-    var obs = {}
-    var i = 0
-    while(i < size(obstacles)){
-        var temp = to_argos(obstacles[i].position)
-        obs[i] = {
-            .0 = temp.x,
-            .1 = temp.y,
-            .2 = rrtdim_to_meters(obstacles[i].radius)
-        }
-        i = i + 1
-    }
-    draw_obstacles(obs)
-}
-
 function argos_draw_obstacles_dis(obstacles){
     var obs = {}
     var i = 0
@@ -52,7 +37,8 @@ function argos_draw_obstacles_dis(obstacles){
         obs[i] = {
             .0 = temp.x,
             .1 = temp.y,
-            .2 = rrtdim_to_meters(obstacles[i].radius)
+            .2 = rrtdim_to_meters(obstacles[i].radius),
+            .3 = obstacles[i].type
         }
         i = i + 1
     }

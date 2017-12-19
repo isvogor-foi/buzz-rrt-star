@@ -69,48 +69,8 @@ function init() {
         .7 = {.wp = from_argos(math.vec2.new(0.0, 0.0))}
     }
 
-    # for now only box (w = h, not working well otherwise)
-    obstacles = {
-        #.0 = {.x = 0.4, .y = 0.4, .w = 0.4, .h = 0.4},
-        #.1 = {.x = 0.4, .y = -0.4, .w = 0.4, .h = 0.4},
-        #.2 = {.x = -0.4, .y = 0.4, .w = 0.4, .h = 0.4},
-        #.3 = {.x = -0.4, .y = -0.4, .w = 0.4, .h = 0.4}
-    }
-
-    # .0 = point, .1 = radius
-    discovered_obstacles = {
-        .0 = { .position = from_argos(math.vec2.new(1.1, 1.1)), .radius = meters_to_rrtdim(0.02)},
-        .1 = { .position = from_argos(math.vec2.new(1.2, 1.2)), .radius = meters_to_rrtdim(0.02)}
-    }
-
     # discrete obstacles (stored in MAP coordinates)
-    discovered_obstacles_dis = {
-        # .0 = {.position = math.vec2.new(0.2, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .1 = {.position = math.vec2.new(0.2, 0.3), .radius = meters_to_rrtdim(0.05)},
-        # .2 = {.position = math.vec2.new(0.2, 0.4), .radius = meters_to_rrtdim(0.05)},
-        # .3 = {.position = math.vec2.new(0.2, 0.5), .radius = meters_to_rrtdim(0.05)},
-        # .4 = {.position = math.vec2.new(0.2, 0.6), .radius = meters_to_rrtdim(0.05)},
-        # .5 = {.position = math.vec2.new(0.3, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .6 = {.position = math.vec2.new(0.4, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .7 = {.position = math.vec2.new(0.5, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .8 = {.position = math.vec2.new(0.6, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .9 = {.position = math.vec2.new(0.2, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .10 = {.position = math.vec2.new(-0.2, 0.3), .radius = meters_to_rrtdim(0.05)},
-        # .11 = {.position = math.vec2.new(-0.2, 0.4), .radius = meters_to_rrtdim(0.05)},
-        # .12 = {.position = math.vec2.new(-0.2, 0.5), .radius = meters_to_rrtdim(0.05)},
-        # .13 = {.position = math.vec2.new(-0.2, 0.6), .radius = meters_to_rrtdim(0.05)},
-        # .14 = {.position = math.vec2.new(-0.3, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .15 = {.position = math.vec2.new(-0.4, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .16 = {.position = math.vec2.new(-0.5, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .17 = {.position = math.vec2.new(-0.6, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .18 = {.position = math.vec2.new(-0.2, 0.2), .radius = meters_to_rrtdim(0.05)},
-        # .19 = {.position = math.vec2.new(0.2, -0.2), .radius = meters_to_rrtdim(0.05)},
-        # .20 = {.position = math.vec2.new(0.2, -0.3), .radius = meters_to_rrtdim(0.05)},
-        # .21 = {.position = math.vec2.new(0.2, -0.4), .radius = meters_to_rrtdim(0.05)},
-        # .22 = {.position = math.vec2.new(0.2, -0.5), .radius = meters_to_rrtdim(0.05)},
-        # .23 = {.position = math.vec2.new(0.2, -0.6), .radius = meters_to_rrtdim(0.05)}
-    }
-    #obstacle_detected = 0
+    discovered_obstacles_dis = {}
 }
 
 
@@ -138,7 +98,7 @@ function step() {
         path_points = print_solution(nodes, end_point)
 
     } else if (CURRENT_WAYPOINT < size(waypoints) and size(path_points) != 0){
-        #argos_draw_obstacles(discovered_obstacles)
+        consolidate_map()
         argos_draw_obstacles_dis(discovered_obstacles_dis)
         follow_waypoints()
     } else {

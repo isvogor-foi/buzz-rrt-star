@@ -52,7 +52,7 @@ function rrt(){
     }#end main while
     log("Done after: ", i, ", steps.")
     log("Waypoint ", CURRENT_WAYPOINT, " / ", size(waypoints) - 1)
-    return 1 
+    return 1
 }
 
 #choose parent of a new node
@@ -92,47 +92,62 @@ function rewire(nodes, newnode){
 # assumes axis aligment (no rotated objects)
 
 function check_intersection(node_start, node_end){
-
+    var res_c = 0
+    var res_r = 0
     var i = 0
     while(i < size(discovered_obstacles_dis)){
         # obstacle circle
-        var current = from_argos(math.vec2.new(discovered_obstacles_dis[i].position.x, discovered_obstacles_dis[i].position.y))
-        var current_r = (A_HEIGHT / DIM_MAP) / 2.0
-        current_r = meters_to_rrtdim(current_r)
 
-        # get radius for the path offset
-        var path_radius = meters_to_rrtdim(SAFE_RADIUS)
-        var ns = chk_c2c_intersection(node_start, path_radius, current, current_r)
-        var ne = chk_c2c_intersection(node_end, path_radius, current, current_r)
-        var x = (node_start.x + node_end.x) / 2.0
-        var y = (node_start.y + node_end.y) / 2.0
-        var mp = chk_c2c_intersection(math.vec2.new(x, y), path_radius, current, current_r)
-
-        var my = from_argos(math.vec2.new(pose.position.x, pose.position.y))
-        if(equal(my, node_start)){
-            ns = 0
+        if(discovered_obstacles_dis[i].type == 0){
+            res_c = chk_circ_intersection(discovered_obstacles_dis[i], node_start, node_end)
+        } else {
+            res_r = chk_rect_obstacles(discovered_obstacles_dis[i], node_start, node_end)
         }
-
-        # anyone has a collision?
-        # don't check within the start point, as the robot
-        # may be in the collision, may be a flag for that?
-        if(ne == 1 or ns == 1 or mp == 1){
-            #log("I: ", i)
+        if(res_c == 1 or res_r == 1){
             return 1
         }
+
         i = i + 1
     }
 
+    #return chk_circ_intersection(node_start, node_end)
     #return chk_rect_obstacles(node_start, node_end)
+    return 0
+}
+
+function chk_circ_intersection(obstacle, node_start, node_end){
+    # obstacle circle
+    var current = from_argos(math.vec2.new(obstacle.position.x, obstacle.position.y))
+    var current_r = (A_HEIGHT / DIM_MAP) / 2.0
+    current_r = meters_to_rrtdim(current_r)
+
+    # get radius for the path offset
+    var path_radius = meters_to_rrtdim(SAFE_RADIUS)
+    var ns = chk_c2c_intersection(node_start, path_radius, current, current_r)
+    var ne = chk_c2c_intersection(node_end, path_radius, current, current_r)
+    var x = (node_start.x + node_end.x) / 2.0
+    var y = (node_start.y + node_end.y) / 2.0
+    var mp = chk_c2c_intersection(math.vec2.new(x, y), path_radius, current, current_r)
+
+    var my = from_argos(math.vec2.new(pose.position.x, pose.position.y))
+    if(equal(my, node_start)){
+        ns = 0
+    }
+
+    # anyone has a collision?
+    # don't check within the start point, as the robot
+    # may be in the collision, may be a flag for that?
+    if(ne == 1 or ns == 1 or mp == 1){
+        #log("I: ", i)
+        return 1
+    }
+
     return 0
 }
 
 function chk_c2c_intersection(circle_a, a_r, circle_b, b_r){
     var distance = point_distance(circle_a, circle_b)
-    #log("Verify: ", circle_a.x, ", ", circle_a.y, ", r: ", a_r, " :: ", circle_b.x, ", ", circle_b.y, ", r: ", b_r)
     if(a_r + b_r >= distance){
-        #log("My: ", my.x, ", ", my.y)
-        #log("Collision: ", circle_a.x, ", ", circle_a.y, ", r: ", a_r, " :: ", circle_b.x, ", ", circle_b.y, ", r: ", b_r)
         return 1
     } else {
         return 0
@@ -141,29 +156,26 @@ function chk_c2c_intersection(circle_a, a_r, circle_b, b_r){
 
 # this is for rectangular, big obstacles you can put in argos
 # this uses the obstacle data structure
-function chk_rect_obstacles(node_start, node_end){
-    var i = 0
-    while(i < size(obstacles)){
-        # transform coordinates to map type
-        var current = from_argos(math.vec2.new(obstacles[i].x, obstacles[i].y))
-        var w = meters_to_rrtdim(obstacles[i].w)
-        var h = meters_to_rrtdim(obstacles[i].h)
+function chk_rect_obstacles(obstacle, node_start, node_end){
+    # transform coordinates to map type
+    # TODO: maybe those should be tilted (i.e. moved to the middle point (as radius is?))
+    var current = from_argos(math.vec2.new(obstacle.position.x, obstacle.position.y))
+    var w = obstacle.radius
+    var h = w
 
-        # get start and endpoint circle intersection (startpoint ,endpoint, middlepoint)
-        var sp = chk_cir2rec_intersection(node_start, current.x, current.y, w, h)
-        var ep = chk_cir2rec_intersection(node_end, current.x, current.y, w, h)
+    # get start and endpoint circle intersection (startpoint ,endpoint, middlepoint)
+    var sp = chk_cir2rec_intersection(node_start, current.x, current.y, w, h)
+    var ep = chk_cir2rec_intersection(node_end, current.x, current.y, w, h)
 
-        # midpoint intersection
-        var x = (node_start.x + node_end.x) / 2.0
-        var y = (node_start.y + node_end.y) / 2.0
-        var mp = chk_cir2rec_intersection(math.vec2.new(x, y), current.x, current.y, w, h)
+    # midpoint intersection
+    var x = (node_start.x + node_end.x) / 2.0
+    var y = (node_start.y + node_end.y) / 2.0
+    var mp = chk_cir2rec_intersection(math.vec2.new(x, y), current.x, current.y, w, h)
 
-        if( sp == 1 or ep == 1 or mp == 1){
-            return 1
-        }
-
-        i = i + 1
+    if( sp == 1 or ep == 1 or mp == 1){
+        return 1
     }
+
     return 0
 }
 

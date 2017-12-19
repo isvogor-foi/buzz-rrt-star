@@ -16,7 +16,7 @@ function get_ir_obst(){
             var robot_position = math.vec2.new(pose.position.x, pose.position.y)
             var obstacle_position = math.vec2.add(robot_position, math.vec2.newp(IR_SENSOR_RANGE, angle))
             #add_obstacle(obstacle_position)
-            add_obstacle_dis(obstacle_position)
+            add_obstacle_dis(obstacle_position, 0)
 
             angles_triggered[size(angles_triggered)] = value.angle
         }
@@ -46,7 +46,7 @@ function get_ir_obst_avg(){
         var robot_position = math.vec2.new(pose.position.x, pose.position.y)
         var obstacle_position = math.vec2.add(robot_position, math.vec2.newp(IR_SENSOR_RANGE, angle))
         #add_obstacle(obstacle_position)
-        add_obstacle_dis(obstacle_position)
+        add_obstacle_dis(obstacle_position, 0)
     }
 
     return result
@@ -61,7 +61,7 @@ function add_obstacle(position){
 }
 
 # add obstacle to the discrete map
-function add_obstacle_dis(position){
+function add_obstacle_dis(position, obs_type){
     position = from_argos(math.vec2.new(position.x, position.y))
     var x = position.x / XDIM * DIM_MAP
     var y = position.y / YDIM * DIM_MAP
@@ -74,6 +74,7 @@ function add_obstacle_dis(position){
     while(i < size(discovered_obstacles_dis)){
         var current = discovered_obstacles_dis[i]
         if(current.position.x == x and current.position.y == y){
+            # TODO: increase probability
             return
         }
         i = i + 1
@@ -82,8 +83,73 @@ function add_obstacle_dis(position){
     var obstacle_radius = (A_HEIGHT / DIM_MAP) / 2.0
     discovered_obstacles_dis[size(discovered_obstacles_dis)] = {
         .position = math.vec2.new(x, y),
-        .radius = meters_to_rrtdim(obstacle_radius)
+        .radius = meters_to_rrtdim(obstacle_radius),
+        .type = obs_type # 0 circle, 1 rectangle TODO: prevent adding new circles if rectangle is there
     }
 }
 
 # larger obstacles
+function consolidate_map(){
+    var map_inc = A_HEIGHT / DIM_MAP    # this is expressed in argos coordinates
+    var map_inc_x = map_inc
+    var map_inc_y = map_inc
+    var i = 0
+
+    while(i < size(discovered_obstacles_dis)){
+        var current = discovered_obstacles_dis[i]
+
+        map_inc_x = map_inc
+        map_inc_y = map_inc
+
+        if(current.position.x < 0){
+            map_inc_x = -map_inc
+        }
+        if(current.position.y < 0){
+            map_inc_y = -map_inc
+        }
+
+        # check neigbors
+        var up = check_cell(current.position.x, current.position.y + map_inc_y)
+        var right = check_cell(current.position.x + map_inc_x, current.position.y)
+        var up_right = check_cell(current.position.x + map_inc_x, current.position.y + map_inc_y)
+        log("Cells: ", current.position.x, ", ", current.position.y, ", ", map_inc_x, ", ", map_inc_y )
+
+        if(up + right + up_right >= 2){
+            delete_ready = 1
+            #log("Got one!")
+            discovered_obstacles_dis = remove_cell(current.position.x, current.position.y + map_inc_y, discovered_obstacles_dis)
+            discovered_obstacles_dis = remove_cell(current.position.x + map_inc_x, current.position.y, discovered_obstacles_dis)
+            discovered_obstacles_dis = remove_cell(current.position.x + map_inc_x, current.position.y + map_inc_y, discovered_obstacles_dis)
+            add_obstacle_dis(current.position, 1)
+            return
+        }
+        i = i + 1
+    }
+}
+
+function check_cell(x, y){
+    var i = 0
+    while(i < size(discovered_obstacles_dis)){
+        var current = discovered_obstacles_dis[i]
+        if(current.position.x == x and current.position.y == y){
+            #check value?
+            return 1
+        }
+        i = i + 1
+    }
+    return 0
+}
+
+function remove_cell(x, y, tab){
+    var i = 0
+    var result = {}
+    while(i < size(tab)){
+        var current = tab[i]
+        if(current.position.x != x and current.position.y != y){
+            result[size(result)] = current
+        }
+        i = i + 1
+    }
+    return result
+
+}
