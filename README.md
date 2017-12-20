@@ -1,10 +1,13 @@
-A work in progress Buzz library for RRT*
-<<<<<<< HEAD
+##### RRT* implementation for a swarm of robots
 
-Visualization using [ARGoS]: http://argos-sim.info
+This is made specifically to run in [ARGoS](http://argos-sim.info), however it will be modified to also work with Gazebo in future. It's currently under development, in the meantime, you can check out some of the following images:
+
+A work in progress Buzz library for RRT*
 
 ![FIG1](https://raw.githubusercontent.com/isvogor-foi/buzz-rrt-star/master/img/rrt-1.png)
 
+*Avoiding artificially added obstacles*
+
 ![FIG1](https://raw.githubusercontent.com/isvogor-foi/buzz-rrt-star/master/img/rrt-2.png)
-=======
->>>>>>> ffc65abf8dd32a3db45c13f445fdd7ef8cd7709d
+
+*Active scanning with map reduction*
