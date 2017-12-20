@@ -5,7 +5,9 @@ This is made specifically to run in [ARGoS](http://argos-sim.info), however it w
 A work in progress Buzz library for RRT*
 
 ![FIG1](https://raw.githubusercontent.com/isvogor-foi/buzz-rrt-star/master/img/rrt-1.png)
+
 *Avoiding artificially added obstacles*
 
 ![FIG1](https://raw.githubusercontent.com/isvogor-foi/buzz-rrt-star/master/img/rrt-2.png)
+
 *Active scanning with map reduction*
